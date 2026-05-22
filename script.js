@@ -1,3 +1,6 @@
+var tasks = [];
+var mode;
+var currentEditedTaskId;
 $("#addTask-btn").on("click", addTask);
 $("#saveChanges-btn").on("click", saveChanges);
 
@@ -5,13 +8,17 @@ $.ajax({
   url: "http://localhost:8000/api/todos",
   method: "GET",
   success: function (response) {
-    console.log("Tasks fetched successfully:", response.length);
-    renderTasks(response);
+    console.log("Tasks fetched successfully:", response);
+    tasks = response;
+    renderTasks();
   },
 });
 
-function renderTasks(tasks) {
+function renderTasks() {
   console.log("Rendering tasks:", tasks);
+  //clear the previous ui to avoid duplicates
+  $(".tasks").empty();
+
   for (let index = 0; index < tasks.length; index++) {
     var id = tasks[index].id;
     var name = tasks[index].name;
@@ -33,53 +40,91 @@ function renderTasks(tasks) {
     );
     $("#editBtn-" + index).on(
       "click",
-      { id: id, runFunc: editTask, value: name },
+      { id: id, runFunc: editTask, value: name, index: index },
       onClick,
     );
-    $("#deleteBtn-" + id).on("click", { id: id, runFunc: deleteTask }, onClick);
+    $("#deleteBtn-" + id).on(
+      "click",
+      { id: id, runFunc: deleteTask, index: index },
+      onClick,
+    );
   }
 }
 
 function deleteTask(data) {
-  console.log("deleting task number:" + data.id);
   $.ajax({
     url: "http://localhost:8000/api/todos/" + data.id,
     method: "DELETE",
-    onSuccess: function (response) {
-      console.log("Task deleted successfully:", response);
-      $("#item-" + data.id).remove();
+    success: function (response) {
+      //remove the deleted task from the tasks array and re-render the tasks
+      tasks.splice(data.index, 1);
+      renderTasks();
+    },
+    error: function (error) {
+      console.error("Error deleting task:", error);
     },
   });
-  console.log("need to delete task number:" + data.id);
 }
 function editTask(data) {
   $(".modal-title").text("Edit Task");
   $("#taskInput").val(data.value);
-  console.log("need to edit task number:" + data.id, data.value);
+  mode = "edit";
+  currentEditedTaskId = data.id;
 }
 function addTask() {
   console.log("Adding a new task...");
   $(".modal-title").text("Add Task");
   $("#taskInput").val("");
+  mode = "add";
 }
 function onClick(event) {
   event.data.runFunc(event.data);
 }
 function saveChanges() {
-  console.log("saving");
+  console.log(mode);
+  // Depending on the mode, either save a new task or save the edited task
+  if (mode === "add") {
+    saveNewTask();
+  } else if (mode === "edit") {
+    saveEditedTask();
+  }
+}
+function toggleTask(data) {
+  console.log("toggling task number:" + data.id);
+}
+function saveNewTask() {
   $.ajax({
     url: "http://localhost:8000/api/todos",
     method: "POST",
     data: { name: $("#taskInput").val() },
     success: function (response) {
       console.log("Task added successfully:", response);
-      renderTasks(response);
+      tasks.push(response);
+      renderTasks();
     },
     onError: function (error) {
       console.error("Error adding task:", error);
     },
   });
 }
-function toggleTask(data) {
-  console.log("toggling task number:" + data.id);
+function saveEditedTask() {
+  $.ajax({
+    url: "http://localhost:8000/api/todos/" + currentEditedTaskId,
+    method: "PATCH",
+    data: { name: $("#taskInput").val() },
+    success: function (response) {
+      console.log("Task edited successfully:", response);
+      //find the index of the edited task , and update it accordignly
+      const taskIndex = tasks.findIndex(
+        (task) => task.id === currentEditedTaskId,
+      );
+      if (taskIndex !== -1) {
+        tasks[taskIndex] = response;
+        renderTasks();
+      }
+    },
+    onError: function (error) {
+      console.error("Error editing task:", error);
+    },
+  });
 }

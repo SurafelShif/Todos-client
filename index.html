@@ -9,16 +9,26 @@
   <body class="container">
     <div>
       <h1>My Tasks</h1>
+      <!-- add task and filter section -->
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <button
+          type="button"
+          class="btn btn-primary my-2"
+          data-bs-toggle="modal"
+          data-bs-target="#exampleModal"
+          onclick="addTask()"
+        >
+          Add Task
+        </button>
+        <div>
+          <select id="filter" class="form-select">
+            <option value="all" selected>All</option>
+            <option value="finished">Finished</option>
+            <option value="unfinished">Unfinished</option>
+          </select>
+        </div>
+      </div>
       <!-- PopUp Section -->
-      <button
-        type="button"
-        class="btn btn-primary my-2"
-        data-bs-toggle="modal"
-        data-bs-target="#exampleModal"
-        onclick="addTask()"
-      >
-        Add Task
-      </button>
       <div
         class="modal fade"
         id="exampleModal"

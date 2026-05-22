@@ -2,18 +2,18 @@ var tasks = [];
 var mode;
 var currentEditedTaskId;
 var currentEditedTaskIndex;
+
 $("#addTask-btn").on("click", addTask);
 $("#saveChanges-btn").on("click", saveChanges);
-
-$.ajax({
-  url: "http://localhost:8000/api/todos",
-  method: "GET",
-  success: function (response) {
-    console.log("Tasks fetched successfully:", response);
-    tasks = response;
-    renderTasks();
-  },
+$("#filter").on("change", function (event) {
+  setFilter(event.target.value);
+  renderTasks();
 });
+
+//intial render of the tasks
+getTasks();
+
+//function used to render the tasks in the ui
 function renderTasks() {
   console.log("Rendering tasks:", tasks);
   //clear the previous ui to avoid duplicates
@@ -157,4 +157,34 @@ function saveEditedTask() {
       console.error("Error editing task:", error);
     },
   });
+}
+
+function getTasks() {
+  const filter = getFilter();
+
+  $.ajax({
+    url: "http://localhost:8000/api/todos/" + filter,
+    method: "GET",
+
+    success: function (response) {
+      console.log(response);
+
+      tasks = response;
+
+      renderTasks();
+    },
+  });
+}
+
+function setFilter(filter) {
+  const url = new URL(window.location.href);
+  url.searchParams.set("filter", filter);
+  window.history.pushState({}, "", url);
+
+  getTasks();
+  renderTasks();
+}
+function getFilter() {
+  const urlParams = new URLSearchParams(window.location.search);
+  return urlParams.get("filter") || "all";
 }

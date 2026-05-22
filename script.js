@@ -14,7 +14,6 @@ $.ajax({
     renderTasks();
   },
 });
-
 function renderTasks() {
   console.log("Rendering tasks:", tasks);
   //clear the previous ui to avoid duplicates
@@ -23,14 +22,26 @@ function renderTasks() {
   for (let index = 0; index < tasks.length; index++) {
     var id = tasks[index].id;
     var name = tasks[index].name;
-    var isFinished = tasks[index].isFinished;
+    var isFinished = tasks[index].is_finished;
 
     $(".tasks").append("<div id=item-" + id + "></div>");
     $("#item-" + id).addClass(
       "d-flex algn-items-center bg-dark text-white gap-3",
     );
-    $("#item-" + id).append("<p id=name-" + id + ">Name -  " + name + ".</p>");
-    $("#name-" + id).on("click", { id: id, runFunc: toggleTask }, onClick);
+    $("#item-" + id).append(
+      "<p id=name-" +
+        id +
+        " class='" +
+        (isFinished ? "text-decoration-line-through" : "") +
+        "'>" +
+        name +
+        "</p>",
+    );
+    $("#name-" + id).on(
+      "click",
+      { id: id, runFunc: toggleTask, isFinished: isFinished, index: index },
+      onClick,
+    );
     $("#item-" + id).append(
       "<btn id=deleteBtn-" + id + " class='btn btn-danger'>Delete</btn>",
     );
@@ -92,7 +103,27 @@ function saveChanges() {
   }
 }
 function toggleTask(data) {
-  console.log("toggling task number:" + data.id);
+  console.log(
+    "Toggling task with ID:",
+    data.id,
+    "Current state:",
+    data.isFinished,
+  );
+  $.ajax({
+    url: "http://localhost:8000/api/todos/" + data.id,
+    method: "PATCH",
+    data: {
+      is_finished: data.isFinished ? 0 : 1,
+    },
+    success: function (response) {
+      console.log("Task toggled successfully:", response);
+      tasks[data.index].is_finished = !data.isFinished;
+      renderTasks();
+    },
+    error: function (err) {
+      console.error("Toggle failed:", err);
+    },
+  });
 }
 function saveNewTask() {
   $.ajax({
@@ -120,7 +151,7 @@ function saveEditedTask() {
 
       tasks[currentEditedTaskIndex].name = $("#taskInput").val();
       console.log("Updated tasks array:", tasks);
-      renderTasks();
+      // renderTasks();
     },
     onError: function (error) {
       console.error("Error editing task:", error);

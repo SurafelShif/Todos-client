@@ -1,6 +1,7 @@
 var tasks = [];
 var mode;
 var currentEditedTaskId;
+var currentEditedTaskIndex;
 $("#addTask-btn").on("click", addTask);
 $("#saveChanges-btn").on("click", saveChanges);
 
@@ -70,6 +71,7 @@ function editTask(data) {
   $("#taskInput").val(data.value);
   mode = "edit";
   currentEditedTaskId = data.id;
+  currentEditedTaskIndex = data.index;
 }
 function addTask() {
   console.log("Adding a new task...");
@@ -115,13 +117,10 @@ function saveEditedTask() {
     success: function (response) {
       console.log("Task edited successfully:", response);
       //find the index of the edited task , and update it accordignly
-      const taskIndex = tasks.findIndex(
-        (task) => task.id === currentEditedTaskId,
-      );
-      if (taskIndex !== -1) {
-        tasks[taskIndex] = response;
-        renderTasks();
-      }
+
+      tasks[currentEditedTaskIndex].name = $("#taskInput").val();
+      console.log("Updated tasks array:", tasks);
+      renderTasks();
     },
     onError: function (error) {
       console.error("Error editing task:", error);

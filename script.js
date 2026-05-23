@@ -15,7 +15,6 @@ getTasks();
 
 //function used to render the tasks in the ui
 function renderTasks() {
-  console.log("Rendering tasks:", tasks);
   //clear the previous ui to avoid duplicates
   $(".tasks").empty();
 
@@ -85,7 +84,6 @@ function editTask(data) {
   currentEditedTaskIndex = data.index;
 }
 function addTask() {
-  console.log("Adding a new task...");
   $(".modal-title").text("Add Task");
   $("#taskInput").val("");
   mode = "add";
@@ -94,7 +92,6 @@ function onClick(event) {
   event.data.runFunc(event.data);
 }
 function saveChanges() {
-  console.log(mode);
   // Depending on the mode, either save a new task or save the edited task
   if (mode === "add") {
     saveNewTask();
@@ -103,12 +100,6 @@ function saveChanges() {
   }
 }
 function toggleTask(data) {
-  console.log(
-    "Toggling task with ID:",
-    data.id,
-    "Current state:",
-    data.isFinished,
-  );
   $.ajax({
     url: "http://localhost:8000/api/todos/" + data.id,
     method: "PATCH",
@@ -118,6 +109,7 @@ function toggleTask(data) {
     success: function (response) {
       console.log("Task toggled successfully:", response);
       tasks[data.index].is_finished = !data.isFinished;
+      getTasks();
       renderTasks();
     },
     error: function (err) {
@@ -133,6 +125,7 @@ function saveNewTask() {
     success: function (response) {
       console.log("Task added successfully:", response);
       tasks.push(response);
+      getTasks();
       renderTasks();
     },
     onError: function (error) {
@@ -146,12 +139,10 @@ function saveEditedTask() {
     method: "PATCH",
     data: { name: $("#taskInput").val() },
     success: function (response) {
-      console.log("Task edited successfully:", response);
       //find the index of the edited task , and update it accordignly
 
       tasks[currentEditedTaskIndex].name = $("#taskInput").val();
-      console.log("Updated tasks array:", tasks);
-      // renderTasks();
+      renderTasks();
     },
     onError: function (error) {
       console.error("Error editing task:", error);
